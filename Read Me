@@ -1,0 +1,47 @@
+# Reproducibility materials for Gallagher (2026), *Chance*
+## “Outliers & Alcohol: Revisiting Wilkinson's Graphic Using State Mortality Data, Shrinkage, and Structural Equation Modeling”
+
+This repository contains the data and R code used to generate all figures in the article.
+
+## Repository structure
+
+- **docs/** – R scripts that generate Figures 1–8  
+- **data/** – Input Excel data files used by the scripts  
+- **models/** – SEM (lavaan) output used by Figure 8  
+- **images/** – Output directory created by the scripts
+
+## How to reproduce the figures
+
+Open R or RStudio and run the scripts in the `docs/` folder.
+
+Recommended order:
+
+1. `Gallagher_Chance_Fig1_final.R`
+2. `Gallagher_Chance_Fig2ab_final.R`
+3. `Gallagher_Chance_Fig3ab_final.R`
+4. `Gallagher_Chance_Fig4ab_final.R`
+5. `Gallagher_Chance_Fig5_final.R`
+6. `Gallagher_Chance_Fig6_7_lavaan_final.R`  
+   *(writes SEM results to the `models/` folder)*
+7. `Gallagher_Chance_Fig8_final.R`
+
+Figures will be written to `images/final/`.
+
+## Required R packages
+
+The scripts use packages including:
+
+readxl  
+readr  
+dplyr  
+ggplot2  
+ggrepel  
+ggExtra  
+DiagrammeR  
+DiagrammeRsvg  
+rsvg  
+magick
+
+## License
+
+This project is released under the MIT License.
