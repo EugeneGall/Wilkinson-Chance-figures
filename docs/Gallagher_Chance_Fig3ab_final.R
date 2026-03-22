@@ -11,7 +11,7 @@
 # Fay, R. E. and R. A. Herriot 1979. Estimates of Income for Small Places:
 # An Application of James-Stein Procedures to Census Data
 # Journal of the American Statistical Association, Vol. 74, No.366 (Jun., 1979),
-# pp.269-277. Code last updated: 17 Feb 2026
+# pp.269-277. Code last updated: 17 Feb 2026, 22 March 2026
 
 suppressPackageStartupMessages({
   library(readxl)
@@ -21,71 +21,14 @@ suppressPackageStartupMessages({
   library(ggrepel)
 })
 
-
-# ---- Repo-root detection ----
-# Figures live under /docs in your repo, while inputs live under /data at the repo root.
-# So: start from this script's folder, then walk UP until we find a repo marker.
-
-get_script_dir <- function() {
-  # Works for: Rscript --file=..., and (most of the time) RStudio "Source"
-  this_file <- NULL
-  args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- "--file="
-  hit <- grep(file_arg, args)
-  if (length(hit) > 0) {
-    this_file <- sub(file_arg, "", args[hit[1]])
-  } else if (!is.null(sys.frames()[[1]]$ofile)) {
-    this_file <- sys.frames()[[1]]$ofile
-  }
-  
-  if (!is.null(this_file) && nzchar(this_file) && file.exists(this_file)) {
-    return(normalizePath(dirname(this_file), winslash = "/", mustWork = TRUE))
-  }
-  
-  return(normalizePath(getwd(), winslash = "/", mustWork = TRUE))
-}
-
-find_repo_root <- function(start_dir, must_contain_relpath, max_up = 6) {
-  d <- normalizePath(start_dir, winslash = "/", mustWork = TRUE)
-  for (i in 0:max_up) {
-    marker <- file.path(d, must_contain_relpath)
-    if (file.exists(marker)) return(d)
-    parent <- normalizePath(file.path(d, ".."), winslash = "/", mustWork = TRUE)
-    if (identical(parent, d)) break
-    d <- parent
-  }
-  return(normalizePath(start_dir, winslash = "/", mustWork = TRUE))
-}
-
-script_dir <- get_script_dir()
-repo_root  <- find_repo_root(script_dir, file.path("data", "WilkinsonData2023_b.xlsx"))
-
-data_dir   <- file.path(repo_root, "data")
-images_dir <- file.path(repo_root, "images", "final")
-models_dir <- file.path(repo_root, "models")
-
-
-if (!dir.exists(images_dir)) dir.create(images_dir, recursive = TRUE)
-if (!dir.exists(models_dir)) dir.create(models_dir, recursive = TRUE)
-
-cat("Repo root:  ", repo_root, "\n")
-cat("Data dir:   ", data_dir, "\n")
-cat("Images dir: ", images_dir, "\n")
-cat("Models dir: ", models_dir, "
-
-")
 # -----------------------------
 # Paths
 # -----------------------------
-in_path  <- file.path(data_dir, "WilkinsonData2023_b.xlsx")
-
-if (!file.exists(in_path)) {
-  stop('Data file not found: ', in_path, '\nFix: put the required Excel file in ', data_dir, ' (repo root /data).')
-}
-
+in_path  <- "../data/WilkinsonData2023_b.xlsx"
 sheet_nm <- "WilkinsonData2023"
 
-out_dir <- images_dir
+out_dir  <- "../images"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 message("Working directory: ", getwd())
 message("Saving to:        ", normalizePath(out_dir, winslash = "/", mustWork = FALSE))
@@ -108,7 +51,15 @@ df <- read_excel(in_path, sheet = sheet_nm) %>%
 
 # -----------------------------
 # EB shrinkage helper (rate per 100k from counts + population)
+# eb_shrink_rate():
+# A compact univariate empirical-Bayes (Fay–Herriot-style) shrinkage function
+# developed for the state-level analyses and graphics in this project.
+# This is a simplified, application-specific implementation and not a full
+# small-area estimation framework (e.g., it does not estimate MSEs or support
+# multivariate models as in packages such as `sae` or `msae`).
+# Future work may compare outputs with established SAE software.
 # -----------------------------
+
 eb_shrink_rate <- function(y_rate, deaths_like, pop, scale = 1e5, death_floor = 0.5) {
   # deaths_like can be non-integer; for pure death counts it's integer.
   # death_floor prevents SE=0 for tiny/zero counts.
@@ -326,12 +277,12 @@ fig3_b <- make_fig03_marginal(df, "AutoDeathRate_EB",  panel_tag = "b",
 fig3_a
 fig3_b
 
-ggsave(file.path(out_dir, "g_fig3_a.png"), plot = fig3_a, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig3_a.eps"), plot = fig3_a, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig3_a.svg"), plot = fig3_a, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig3_a.pdf"), plot = fig3_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_a.png",  plot = fig3_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_a.eps",  plot = fig3_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_a.svg", plot = fig3_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_a.pdf", plot = fig3_a, width = 7, height = 7, dpi = 300)
 
-ggsave(file.path(out_dir, "g_fig3_b.png"), plot = fig3_b, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig3_b.eps"), plot = fig3_b, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig3_b.svg"), plot = fig3_b, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig3_b.pdf"), plot = fig3_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_b.png",  plot = fig3_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_b.eps",  plot = fig3_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_b.svg", plot = fig3_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig3_b.pdf", plot = fig3_b, width = 7, height = 7, dpi = 300)

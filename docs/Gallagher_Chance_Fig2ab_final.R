@@ -11,7 +11,7 @@
 # Fay, R. E. and R. A. Herriot 1979. Estimates of Income for Small Places:
 # An Application of James-Stein Procedures to Census Data
 # Journal of the American Statistical Association, Vol. 74, No.366 (Jun., 1979),
-# pp.269-277. Code last updated: 17 Feb 2026
+# pp.269-277. Code last updated: 17 Feb 2026, 22 March 2026
 
 # ============================================================
 # 0) Packages + simple, reproducible paths (NO setwd() needed)
@@ -65,9 +65,13 @@ sheet_nm <- "WilkinsonData2023"
 out_dir  <- file.path(repo_root, "images", "final")
 
 if (!file.exists(in_path)) {
-  stop('Data file not found: ', in_path, '\nFix: put the required Excel file in ', data_dir, ' (repo root /data).')
+  stop(
+    "Data file not found:\n  ", in_path, "\n\n",
+    "Fix:\n  Put WilkinsonData2023_b.xlsx into:\n  ",
+    file.path(repo_root, "data"), "\n",
+    "  (or edit in_path to the correct location)."
+  )
 }
-
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
 message("Repo root:        ", repo_root)
@@ -77,7 +81,15 @@ message("Saving to:        ", out_dir)
 # -----------------------------
 # 1) EB shrinkage helper (Fay–Herriot style)
 #    y is a RATE (per 100k), deaths_like is count-like, pop is population
+# eb_shrink_vec():
+# A compact univariate empirical-Bayes (Fay–Herriot-style) shrinkage function
+# developed for the state-level analyses and graphics in this project.
+# This is a simplified, application-specific implementation and not a full
+# small-area estimation framework (e.g., it does not estimate MSEs or support
+# multivariate models as in packages such as `sae` or `msae`).
+# Future work may compare outputs with established SAE software.
 # -----------------------------
+
 eb_shrink_vec <- function(y, deaths_like, pop, scale = 1e5, death_floor = 0.5) {
   
   D  <- pmax(deaths_like, death_floor)  # avoid 0 in sqrt
@@ -375,12 +387,12 @@ g_fig2_b <- make_marginal_figure(
 g_fig2_a
 g_fig2_b
 
-ggsave(file.path(out_dir, "g_fig2_a.png"), plot = g_fig2_a, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig2_a.eps"), plot = g_fig2_a, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig2_a.svg"), plot = g_fig2_a, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig2_a.pdf"), plot = g_fig2_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_a.png",  plot = g_fig2_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_a.eps",  plot = g_fig2_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_a.svg", plot = g_fig2_a, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_a.pdf", plot = g_fig2_a, width = 7, height = 7, dpi = 300)
 
-ggsave(file.path(out_dir, "g_fig2_b.png"), plot = g_fig2_b, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig2_b.eps"), plot = g_fig2_b, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig2_b.svg"), plot = g_fig2_b, width = 7, height = 7, dpi = 300)
-ggsave(file.path(out_dir, "g_fig2_b.pdf"), plot = g_fig2_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_b.png",  plot = g_fig2_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_b.eps",  plot = g_fig2_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_b.svg", plot = g_fig2_b, width = 7, height = 7, dpi = 300)
+ggsave("../images/final/g_fig2_b.pdf", plot = g_fig2_b, width = 7, height = 7, dpi = 300)

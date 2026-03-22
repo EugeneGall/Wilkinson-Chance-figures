@@ -8,8 +8,9 @@
 #            (AFR and DF are FH-shrunken)
 #   Runs the lavaan structural equation model, writing output to /models
 # 
-# Revised: 17 Feb 2026
+# Revised: 17 Feb 2026, 22 March 2026
 
+setwd("C:/manus/Wilkinson Graphics/R/Github docs")
 suppressPackageStartupMessages({
   library(readxl)
   library(dplyr)
@@ -19,47 +20,8 @@ suppressPackageStartupMessages({
   library(metafor)
 })
 
-
-# ---- Repo-root detection ----
-# Recommended: run from repo root; script finds root via this file's location.
-# Fallback: if script location can't be detected, uses getwd().
-
-get_repo_root <- function() {
-  this_file <- NULL
-  args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- "--file="
-  hit <- grep(file_arg, args)
-  if (length(hit) > 0) {
-    this_file <- sub(file_arg, "", args[hit[1]])
-  } else if (!is.null(sys.frames()[[1]]$ofile)) {
-    this_file <- sys.frames()[[1]]$ofile
-  }
-
-  if (!is.null(this_file) && nzchar(this_file) && file.exists(this_file)) {
-    return(normalizePath(dirname(this_file), winslash = "/", mustWork = TRUE))
-  }
-
-  return(normalizePath(getwd(), winslash = "/", mustWork = TRUE))
-}
-
-repo_root <- get_repo_root()
-
-data_dir   <- file.path(repo_root, "data")
-images_dir <- file.path(repo_root, "images", "final")
-models_dir <- file.path(repo_root, "models")
-
-if (!dir.exists(images_dir)) dir.create(images_dir, recursive = TRUE)
-if (!dir.exists(models_dir)) dir.create(models_dir, recursive = TRUE)
-
-cat("Repo root:  ", repo_root, "\n")
-cat("Data dir:   ", data_dir, "\n")
-cat("Images dir: ", images_dir, "\n")
-out_dir <- images_dir
-
-cat("Models dir: ", models_dir, "
-
-")
 # ---- Ensure output folders exist ----
+dir.create("../models", showWarnings = FALSE, recursive = TRUE)
 # dir.create("../images", showWarnings = FALSE, recursive = TRUE)
 
 
@@ -83,8 +45,23 @@ to_abb <- function(state_name_or_abb) {
          as.character(state_name_or_abb))
 }
 
-# Fay–Herriot helper:
-# IMPORTANT: theta_hat = blup(m1)$pred (do NOT add fitted()).
+# -----------------------------
+# 1) EB shrinkage helper (Fay–Herriot style)
+#    y is a RATE (per 100k), deaths_like is count-like, pop is population
+# fh_fit():
+# A compact univariate empirical-Bayes (Fay–Herriot-style) shrinkage function
+# developed for the state-level analyses and graphics in this project.
+# This is a simplified, application-specific implementation and not a full
+# small-area estimation framework (e.g., it does not estimate MSEs or support
+# multivariate models as in packages such as `sae` or `msae`).
+# Future work may compare outputs with established SAE software.
+
+# IMPORTANT: blup(m1)$pred already contains the moderator-based fitted value
+# plus the shrunken state-specific random effect. It is the Fay–Herriot-style
+# shrunken estimate to carry forward. Do NOT add fitted(m1), or the
+# fixed-effects portion will be counted twice.
+# -----------------------------
+
 fh_fit <- function(df, y, v, mods_formula) {
   f_mods <- as.formula(mods_formula)
   
@@ -105,12 +82,7 @@ fh_fit <- function(df, y, v, mods_formula) {
 # -----------------------------
 # 1) Read data (use the _b file because it has counts for FH variances)
 # -----------------------------
-infile_b <- file.path(data_dir, "WilkinsonData2023_b.xlsx")
-
-if (!file.exists(infile_b)) {
-  stop('Data file not found: ', infile_b, '\nFix: put the required Excel file in ', data_dir, ' (repo root /data).')
-}
-
+infile_b <- "../data/WilkinsonData2023_b.xlsx"
 sheet_name <- "WilkinsonData2023"  # adjust only if your sheet name differs
 
 dat <- read_excel(infile_b, sheet = sheet_name)
@@ -258,10 +230,10 @@ p6 <- ggplot(fig6_long, aes(x = AI_prop, y = Value)) +
 
 print(p6)
 
-ggsave(file.path(out_dir, "Figure6.png"), p6, width = 7.5, height = 10.5, dpi = 600)
-ggsave(file.path(out_dir, "Figure6.tif"), p6, width = 7.5, height = 10.5, dpi = 600)
-ggsave(file.path(out_dir, "Figure6.eps"), p6, width = 7.5, height = 10.5, dpi = 600)
-ggsave(file.path(out_dir, "Figure6.pdf"), p6, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure6.png", p6, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure6.tif", p6, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure6.eps", p6, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure6.pdf", p6, width = 7.5, height = 10.5, dpi = 600)
 
 # ============================================================
 # FIGURE 7 (2x1): vs Speed limit, using FH-shrunken outcomes
@@ -321,10 +293,10 @@ p7 <- ggplot(fig7_long, aes(x = Speed_Limit, y = Value)) +
 
 print(p7)
 
-ggsave(file.path(out_dir, "Figure7.png"), p7, width = 7.5, height = 10.5, dpi = 600)
-ggsave(file.path(out_dir, "Figure7.tif"), p7, width = 7.5, height = 10.5, dpi = 600)
-ggsave(file.path(out_dir, "Figure7.eps"), p7, width = 7.5, height = 10.5, dpi = 600)
-ggsave(file.path(out_dir, "Figure7.pdf"), p7, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure7.png", p7, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure7.tif", p7, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure7.eps", p7, width = 7.5, height = 10.5, dpi = 600)
+ggsave("../images/Final/Figure7.pdf", p7, width = 7.5, height = 10.5, dpi = 600)
 # ============================================================
 # (Optional) regression summaries to paste into captions
 # ============================================================

@@ -9,7 +9,10 @@
 # Fay, R. E. and R. A. Herriot 1979. Estimates of Income for Small Places:
 # An Application of James-Stein Procedures to Census Data
 # Journal of the American Statistical Association, Vol. 74, No.366 (Jun., 1979),
-# pp.269-277. Code last updated: 17 Feb 2026
+# pp.269-277. Code last updated: 17 Feb 2026, 22 March 2026
+
+setwd("C:/manus/Wilkinson Graphics/R/docs")
+
 suppressPackageStartupMessages({
   library(readxl)
   library(dplyr)
@@ -19,69 +22,29 @@ suppressPackageStartupMessages({
 })
 
 
-# ---- Repo-root detection (robust on Windows + RStudio + "source()") ----
-# Goal: make these scripts runnable whether you:
-#   (a) click "Source" in RStudio,
-#   (b) run with Rscript,
-#   (c) run from an arbitrary working directory.
-#
-# Strategy:
-#   1) Try to locate this script's directory (Rscript --file, or RStudio "ofile").
-#   2) From that start dir (and as a fallback, getwd()), walk UP a few levels
-#      looking for a repo root marker: required inputs under /data or /models.
-#   3) If still not found, fall back to the start dir.
+# ---- Repo-root detection ----
+# Recommended: run from repo root; script finds root via this file's location.
+# Fallback: if script location can't be detected, uses getwd().
 
-get_script_dir <- function() {
+get_repo_root <- function() {
   this_file <- NULL
   args <- commandArgs(trailingOnly = FALSE)
-  hit <- grep("^--file=", args)
+  file_arg <- "--file="
+  hit <- grep(file_arg, args)
   if (length(hit) > 0) {
-    this_file <- sub("^--file=", "", args[hit[1]])
+    this_file <- sub(file_arg, "", args[hit[1]])
   } else if (!is.null(sys.frames()[[1]]$ofile)) {
-    # Works when using source() or RStudio "Source"
     this_file <- sys.frames()[[1]]$ofile
   }
+
   if (!is.null(this_file) && nzchar(this_file) && file.exists(this_file)) {
     return(normalizePath(dirname(this_file), winslash = "/", mustWork = TRUE))
   }
-  NULL
+
+  return(normalizePath(getwd(), winslash = "/", mustWork = TRUE))
 }
 
-find_repo_root <- function(required_paths = character(), max_up = 6) {
-  start_dirs <- c(get_script_dir(), normalizePath(getwd(), winslash = "/", mustWork = TRUE))
-  start_dirs <- unique(start_dirs[!is.na(start_dirs) & nzchar(start_dirs)])
-
-  is_root <- function(dir) {
-    ok <- TRUE
-    for (rp in required_paths) {
-      ok <- ok && file.exists(file.path(dir, rp))
-    }
-    ok
-  }
-
-  for (start in start_dirs) {
-    d <- start
-    for (k in 0:max_up) {
-      if (is_root(d)) return(d)
-      parent <- normalizePath(file.path(d, ".."), winslash = "/", mustWork = TRUE)
-      if (identical(parent, d)) break
-      d <- parent
-    }
-  }
-
-  # Fallback
-  start_dirs[1]
-}
-
-repo_root <- find_repo_root(required_paths = c('data/WilkinsonData2023_b.xlsx'))
-
-# Helper: if a file is missing where expected, try to locate it anywhere under repo_root.
-locate_file <- function(filename, root = repo_root) {
-  hits <- list.files(root, pattern = paste0("^", filename, "$"), recursive = TRUE,
-                     full.names = TRUE, ignore.case = TRUE)
-  if (length(hits) > 0) normalizePath(hits[1], winslash = "/", mustWork = TRUE) else NA_character_
-}
-
+repo_root <- get_repo_root()
 
 data_dir   <- file.path(repo_root, "data")
 images_dir <- file.path(repo_root, "images", "final")
@@ -99,19 +62,10 @@ cat("Models dir: ", models_dir, "
 # -----------------------------
 # 1) Read + compute observed Y
 # -----------------------------
-in_path <- file.path(data_dir, "WilkinsonData2023_b.xlsx")
+in_path  <- file.path(data_dir, "WilkinsonData2023_b.xlsx")
 
 if (!file.exists(in_path)) {
-  alt <- locate_file("WilkinsonData2023_b.xlsx")
-  if (!is.na(alt)) {
-    message("Note: expected Excel file not found at ", in_path, "
-      Using: ", alt)
-    in_path <- alt
-  } else {
-    stop("Data file not found: ", in_path,
-         "
-Fix: ensure WilkinsonData2023_b.xlsx is under /data at the repo root.")
-  }
+  stop('Data file not found: ', in_path, '\nFix: put the required Excel file in ', data_dir, ' (repo root /data).')
 }
 
 sheet_nm <- "WilkinsonData2023"
@@ -138,6 +92,13 @@ df <- read_excel(in_path, sheet = sheet_nm) %>%
 
 # -----------------------------
 # 2) EB shrinkage for Y (Fay–Herriot style)
+# eb_shrink_vec():
+# A compact univariate empirical-Bayes (Fay–Herriot-style) shrinkage function
+# developed for the state-level analyses and graphics in this project.
+# This is a simplified, application-specific implementation and not a full
+# small-area estimation framework (e.g., it does not estimate MSEs or support
+# multivariate models as in packages such as `sae` or `msae`).
+# Future work may compare outputs with established SAE software.
 # -----------------------------
 eb_shrink_vec <- function(y, deaths_like, pop, scale = 1e5, death_floor = 0.5) {
   
@@ -197,9 +158,9 @@ message("Saving to:        ", normalizePath(out_dir, winslash = "/", mustWork = 
 no_tax_states <- c("Alaska", "Delaware", "Montana", "New Hampshire", "Oregon")
 
 label_states <- c(
-  "South Carolina", "Montana", "Wyoming", "Delaware",
+  "Alaska","South Carolina", "Montana", "Wyoming", "Delaware",
   "Nevada", "New Hampshire", "New Jersey", "New Mexico",
-  "New York", "Massachusetts", "Utah", "Minnesota",
+  "New York", "Massachusetts", "Oregon","Utah", "Minnesota",
   "North Dakota", "West Virginia"
 )
 
